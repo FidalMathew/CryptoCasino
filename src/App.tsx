@@ -10,7 +10,7 @@ export default function App() {
     sdk.actions.ready();
   }, []);
 
-  //test comment - remove late
+  //test comment - remove late sd
   return (
     <div>
       <GlobalContextProvider>
