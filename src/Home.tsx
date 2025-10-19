@@ -6,23 +6,15 @@ import { BetModal } from "./components/BetModal";
 import { generateMockGames } from "./utils/utils";
 import useGlobalContext from "./context/useGlobalContext";
 import { useNavigate } from "react-router-dom";
-import { Game } from "./types/game";
 
 function Home() {
   const [games, setGames] = useState<any[]>(generateMockGames());
-  const [selectedGame, setSelectedGame] = useState<any | null>(null);
   const [showBetModal, setShowBetModal] = useState(false);
   const [gameToJoin, setGameToJoin] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState<"list" | "game">("list");
   const { game } = useGlobalContext();
   const navigate = useNavigate();
 
   const currentUserId = "current-user";
-
-  const handleJoinGame = (gameId: string) => {
-    setGameToJoin(gameId);
-    setShowBetModal(true);
-  };
 
   const handleSubmitBet = (playerName: string, predictedPrice: number) => {
     if (!gameToJoin) return;
@@ -58,18 +50,18 @@ function Home() {
     setGameToJoin(null);
   };
 
-  const handleViewGame = (game: any) => {
-    setSelectedGame(game);
-    setActiveView("game");
-  };
+  // const handleViewGame = (game: any) => {
+  //   setSelectedGame(game);
+  //   setActiveView("game");
+  // };
 
-  const handleBackToList = () => {
-    setActiveView("list");
-    setSelectedGame(null);
-    setGames(generateMockGames());
-  };
+  // const handleBackToList = () => {
+  //   setActiveView("list");
+  //   setSelectedGame(null);
+  //   setGames(generateMockGames());
+  // };
 
-  const activeGames = games.filter((g) => g.status === "active");
+  // const activeGames = games.filter((g) => g.status === "active");
   // const waitingGames = games.filter((g) => g.status === "waiting");
   // const completedGames = games.filter((g) => g.status === "completed");
 
@@ -129,7 +121,7 @@ function Home() {
           </h2>
           {game &&
             game.length > 0 &&
-            game.map((game: Game, index: number) => (
+            game.map((_, index: number) => (
               <div
                 className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 pb-6 pt-2"
                 key={index}

@@ -1,31 +1,31 @@
 import { useState } from "react";
 import { Wallet, TrendingUp, X } from "lucide-react";
 import { toast } from "sonner";
+import type { Game } from "@/types/game";
+import { type Address, parseEther } from "viem";
+import useGlobalContext from "@/context/useGlobalContext";
+import { useParams } from "react-router-dom";
 
 interface BetFormProps {
-  onSubmitBet: (
-    betAmount: number,
-    predictedPrice: number,
-    signature: string
-  ) => void;
-  isDisabled: boolean;
-  memecoinSymbol: string;
+  onSubmitBet: (game: Game) => void;
+  game: Game | null;
 }
 
-export const BetForm = ({
-  onSubmitBet,
-  isDisabled,
-  memecoinSymbol,
-}: BetFormProps) => {
-  const [betAmount, setBetAmount] = useState("10");
+export const BetForm = ({ onSubmitBet, game }: BetFormProps) => {
+  const { id } = useParams();
   const [predictedPrice, setPredictedPrice] = useState("");
   const [isConnected, setIsConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState("");
+  const [walletAddress, setWalletAddress] = useState<Address | "">("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const { account, publicClient, walletClient, CONTRACT_ADDRESS } =
+    useGlobalContext();
 
   const handleConnect = async () => {
-    const mockAddress = `0x${Math.random().toString(16).substr(2, 8)}...${Math.random().toString(16).substr(2, 4)}`;
-    setWalletAddress(mockAddress);
+    if (!account) {
+      toast.error("No account found");
+      return;
+    }
+    setWalletAddress(account.address);
     setIsConnected(true);
     toast.success("Wallet connected successfully!");
   };
@@ -33,7 +33,7 @@ export const BetForm = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isConnected) {
+    if (!isConnected || !walletAddress) {
       toast.error("Please connect your wallet first");
       return;
     }
@@ -43,20 +43,48 @@ export const BetForm = ({
       return;
     }
 
+    if (!game) {
+      toast.error("No active game");
+      return;
+    }
+
     setShowConfirmModal(true);
   };
 
-  const handleConfirmBet = () => {
-    const mockSignature = `sig_${Math.random().toString(36).substr(2, 9)}`;
+  const handleConfirmBet = async () => {
+    if (!game || !walletClient || !publicClient || !CONTRACT_ADDRESS) {
+      toast.error("Missing required dependencies");
+      return;
+    }
 
-    onSubmitBet(
-      parseFloat(betAmount),
-      parseFloat(predictedPrice),
-      mockSignature
-    );
-    setPredictedPrice("");
-    setShowConfirmModal(false);
-    toast.success("Bet placed successfully!");
+    try {
+      toast.loading("Placing bet...");
+
+      // Import gameAbi properly
+      const { gameAbi } = await import("@/lib/gameAbi");
+
+      // Call the joinGame function with the predicted price
+      const tx = await walletClient.writeContract({
+        address: CONTRACT_ADDRESS as `0x${string}`,
+        abi: gameAbi,
+        functionName: "joinGame",
+        args: [BigInt(id || game.id), parseEther(predictedPrice)],
+        account: account!,
+        chain: walletClient.chain,
+      });
+
+      await publicClient.waitForTransactionReceipt({ hash: tx });
+
+      onSubmitBet(game);
+      setPredictedPrice("");
+      setShowConfirmModal(false);
+      toast.dismiss();
+      toast.success("Bet placed successfully!");
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Failed to place bet");
+      console.error(error);
+    }
   };
 
   return (
@@ -86,14 +114,20 @@ export const BetForm = ({
               <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
                 <p className="text-sm text-gray-400 mb-1">Bet Amount</p>
                 <p className="text-2xl font-bold text-green-400">
-                  {betAmount} tokens
+                  {game?.fixedBetAmount
+                    ? (Number(game.fixedBetAmount) / 1e18).toFixed(2)
+                    : "0"}{" "}
+                  tokens
                 </p>
               </div>
 
               <div className="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4">
                 <p className="text-sm text-yellow-400 leading-relaxed">
                   By confirming, you authorize the smart contract to deduct{" "}
-                  {betAmount} tokens if you lose.
+                  {game?.fixedBetAmount
+                    ? (Number(game.fixedBetAmount) / 1e18).toFixed(2)
+                    : "0"}{" "}
+                  tokens if you lose.
                 </p>
               </div>
             </div>
@@ -137,19 +171,20 @@ export const BetForm = ({
                 Bet Amount (Tokens)
               </label>
               <input
-                type="number"
-                value={betAmount}
-                onChange={(e) => setBetAmount(e.target.value)}
-                min="1"
-                step="1"
-                className="w-full bg-gray-900 border-2 border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                disabled={isDisabled}
+                type="text"
+                value={
+                  game?.fixedBetAmount
+                    ? (Number(game.fixedBetAmount) / 1e18).toFixed(2)
+                    : "0"
+                }
+                disabled={true}
+                className="w-full bg-gray-900 border-2 border-gray-700 rounded-lg px-4 py-3 text-gray-500 cursor-not-allowed"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Predict {memecoinSymbol} Price
+                Predict {game?.symbol || "COIN"} Price
               </label>
               <input
                 type="number"
@@ -159,17 +194,19 @@ export const BetForm = ({
                 step="0.00001"
                 min="0"
                 className="w-full bg-gray-900 border-2 border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                disabled={isDisabled}
+                disabled={!game?.active || game?.resolved}
               />
             </div>
 
             <button
               type="submit"
-              disabled={isDisabled}
+              disabled={!game?.active || game?.resolved}
               className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold py-3 sm:py-4 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-lg"
             >
               <TrendingUp className="w-5 h-5" />
-              {isDisabled ? "Game Started" : "Place Bet & Sign Delegation"}
+              {!game?.active || game?.resolved
+                ? "Game Ended"
+                : "Place Bet & Sign Delegation"}
             </button>
           </form>
 

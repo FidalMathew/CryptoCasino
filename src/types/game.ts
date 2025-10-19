@@ -24,6 +24,7 @@ export interface PlayerBet {
 }
 
 export type Game = {
+  id: string;
   symbol: string;
   startAt: bigint;
   joinEndsAt: bigint;
@@ -34,4 +35,10 @@ export type Game = {
   totalPool: bigint;
   winner: string; // address
   finalPrice: bigint;
+  bets: Array<{
+    player: string;
+    guessPrice: bigint;
+    joined: boolean;
+    claimed: boolean;
+  }>;
 };
