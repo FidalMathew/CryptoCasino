@@ -31,6 +31,7 @@ export default function GlobalContextProvider({
   const [publicClient, setPublicClient] = useState<PublicClient | undefined>();
   const [walletClient, setWalletClient] = useState<WalletClient | undefined>();
   const [game, setGame] = useState<Game[] | undefined>();
+  const [farcasterAccount, setFarcasterAccount] = useState<string | null>(null);
 
   useEffect(() => {
     const publicClient = createPublicClient({
@@ -73,9 +74,53 @@ export default function GlobalContextProvider({
         })
       );
 
-      const allGames = await Promise.all(gameDataPromises);
-      console.log(allGames, "all games fetched");
-      setGame(allGames as Game[]);
+      const allGamesRaw = await Promise.all(gameDataPromises);
+      console.log(allGamesRaw, "all games raw data fetched");
+
+      // Transform tuple arrays into proper Game objects
+      const transformedGames: Game[] = allGamesRaw.map((gameData, index) => {
+        const [
+          symbol,
+          startAt,
+          joinEndsAt,
+          endsAt,
+          active,
+          resolved,
+          fixedBetAmount,
+          totalPool,
+          winner,
+          finalPrice,
+        ] = gameData as [
+          string,
+          bigint,
+          bigint,
+          bigint,
+          boolean,
+          boolean,
+          bigint,
+          bigint,
+          string,
+          bigint,
+        ];
+
+        return {
+          id: index.toString(),
+          symbol,
+          startAt,
+          joinEndsAt,
+          endsAt,
+          active,
+          resolved,
+          fixedBetAmount,
+          totalPool,
+          winner,
+          finalPrice,
+          bets: [], // Bets will be loaded when viewing individual game
+        };
+      });
+
+      console.log(transformedGames, "transformed games");
+      setGame(transformedGames);
     })();
   }, [publicClient, walletClient]);
 
@@ -171,6 +216,8 @@ export default function GlobalContextProvider({
         publicClient,
         walletClient,
 
+        farcasterAccount,
+        setFarcasterAccount,
         game,
         joinGame,
         getGameFromId,

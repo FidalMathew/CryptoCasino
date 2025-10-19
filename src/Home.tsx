@@ -1,69 +1,13 @@
-import { useState } from "react";
-import { Dice5, TrendingUp } from "lucide-react";
+import { Dice5, TrendingUp, Trophy } from "lucide-react";
 import { GameCard } from "./components/GameCard";
-import { BetModal } from "./components/BetModal";
-
-import { generateMockGames } from "./utils/utils";
 import useGlobalContext from "./context/useGlobalContext";
 import { useNavigate } from "react-router-dom";
 
 function Home() {
-  const [games, setGames] = useState<any[]>(generateMockGames());
-  const [showBetModal, setShowBetModal] = useState(false);
-  const [gameToJoin, setGameToJoin] = useState<string | null>(null);
   const { game } = useGlobalContext();
   const navigate = useNavigate();
 
-  const currentUserId = "current-user";
-
-  const handleSubmitBet = (playerName: string, predictedPrice: number) => {
-    if (!gameToJoin) return;
-
-    setGames((prevGames) =>
-      prevGames.map((game) => {
-        if (game.id === gameToJoin) {
-          const newBet = {
-            id: `bet-${Date.now()}`,
-            game_id: game.id,
-            user_id: currentUserId,
-            player_name: playerName,
-            predicted_price: predictedPrice,
-            is_winner: false,
-            created_at: new Date().toISOString(),
-          };
-
-          const updatedBets = [...game.bets, newBet];
-          const shouldStart =
-            updatedBets.length >= game.min_players && game.status === "waiting";
-
-          return {
-            ...game,
-            bets: updatedBets,
-            status: shouldStart ? "active" : game.status,
-          };
-        }
-        return game;
-      })
-    );
-
-    setShowBetModal(false);
-    setGameToJoin(null);
-  };
-
-  // const handleViewGame = (game: any) => {
-  //   setSelectedGame(game);
-  //   setActiveView("game");
-  // };
-
-  // const handleBackToList = () => {
-  //   setActiveView("list");
-  //   setSelectedGame(null);
-  //   setGames(generateMockGames());
-  // };
-
-  // const activeGames = games.filter((g) => g.status === "active");
-  // const waitingGames = games.filter((g) => g.status === "waiting");
-  // const completedGames = games.filter((g) => g.status === "completed");
+  console.log(game, "game");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
@@ -119,22 +63,25 @@ function Home() {
             <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
             <span>Active Games</span>
           </h2>
-          {game &&
-            game.length > 0 &&
-            game.map((_, index: number) => (
-              <div
-                className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 pb-6 pt-2"
-                key={index}
-              >
-                <div
-                  key={index}
-                  onClick={() => navigate(`/game/${index}`)}
-                  className="cursor-pointer"
-                >
-                  <GameCard gameId={index.toString()} />
-                </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+            {game && game.filter((g) => g.active).length > 0 ? (
+              game
+                .filter((g) => g.active)
+                .map((g) => (
+                  <div
+                    key={g.id}
+                    onClick={() => navigate(`/game/${g.id}`)}
+                    className="cursor-pointer"
+                  >
+                    <GameCard gameId={g.id} />
+                  </div>
+                ))
+            ) : (
+              <div className="col-span-full h-16 flex justify-center items-center">
+                <p className="text-gray-400">No active games available.</p>
               </div>
-            ))}
+            )}
+          </div>
         </div>
 
         {/* {waitingGames.length > 0 && (
@@ -156,38 +103,28 @@ function Home() {
           </div>
         )} */}
 
-        {/* {completedGames.length > 0 && (
+        {game && (
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4 flex items-center space-x-2">
               <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" />
               <span>Completed Games</span>
             </h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-              {completedGames.map((game) => (
-                <GameCard
-                  key={game.id}
-                  game={game}
-                  onJoinGame={handleJoinGame}
-                  currentUserId={currentUserId}
-                />
-              ))}
+              {game
+                .filter((g) => !g.active && g.resolved)
+                .map((g) => (
+                  <div
+                    key={g.id}
+                    onClick={() => navigate(`/game/${g.id}`)}
+                    className="cursor-pointer"
+                  >
+                    <GameCard gameId={g.id} />
+                  </div>
+                ))}
             </div>
           </div>
-        )} */}
+        )}
       </div>
-
-      <BetModal
-        isOpen={showBetModal}
-        onClose={() => {
-          setShowBetModal(false);
-          setGameToJoin(null);
-        }}
-        onSubmit={handleSubmitBet}
-        memecoinSymbol={
-          games.find((g) => g.id === gameToJoin)?.memecoin_symbol || "DOGE"
-        }
-        betAmount={games.find((g) => g.id === gameToJoin)?.bet_amount || 10}
-      />
     </div>
   );
 }

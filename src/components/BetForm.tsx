@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Wallet, TrendingUp, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Game } from "@/types/game";
-import { type Address, formatEther, parseEther } from "viem";
+import { formatEther, Hex, parseEther } from "viem";
 import useGlobalContext from "@/context/useGlobalContext";
 import { useParams } from "react-router-dom";
+import { useAccount, useConnect } from "wagmi";
+import { gameabi } from "@/lib/abi";
 
 interface BetFormProps {
   onSubmitBet: (game: Game) => void;
@@ -14,26 +16,33 @@ interface BetFormProps {
 export const BetForm = ({ onSubmitBet, game }: BetFormProps) => {
   const { id } = useParams();
   const [predictedPrice, setPredictedPrice] = useState("");
-  const [isConnected, setIsConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<Address | "">("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { account, publicClient, walletClient, CONTRACT_ADDRESS } =
     useGlobalContext();
 
+  // Use wagmi hooks at component level
+  const { address: wagmiAddress, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
+
   const handleConnect = async () => {
-    if (!account) {
-      toast.error("No account found");
-      return;
+    try {
+      if (connectors.length === 0) {
+        toast.error("No wallet connectors available");
+        return;
+      }
+
+      await connect({ connector: connectors[0] });
+      toast.success("Wallet connected successfully!");
+    } catch (error) {
+      console.error("Connection error:", error);
+      toast.error("Failed to connect wallet");
     }
-    setWalletAddress(account.address);
-    setIsConnected(true);
-    toast.success("Wallet connected successfully!");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isConnected || !walletAddress) {
+    if (!isConnected || !wagmiAddress) {
       toast.error("Please connect your wallet first");
       return;
     }
@@ -60,13 +69,10 @@ export const BetForm = ({ onSubmitBet, game }: BetFormProps) => {
     try {
       toast.loading("Placing bet...");
 
-      // Import gameAbi properly
-      const { gameAbi } = await import("@/lib/gameAbi");
-
       // Call the joinGame function with the predicted price
       const tx = await walletClient.writeContract({
-        address: CONTRACT_ADDRESS as `0x${string}`,
-        abi: gameAbi,
+        address: CONTRACT_ADDRESS as Hex,
+        abi: gameabi,
         functionName: "joinGame",
         args: [BigInt(id || game.id), parseEther(predictedPrice)],
         account: account!,
@@ -163,7 +169,7 @@ export const BetForm = ({ onSubmitBet, game }: BetFormProps) => {
           <div className="bg-gray-900 rounded-lg p-3 border border-gray-700">
             <p className="text-xs text-gray-400 mb-1">Connected Wallet</p>
             <p className="text-sm font-mono text-green-400">
-              {walletAddress.slice(0, 7)}...{walletAddress.slice(-6)}
+              {wagmiAddress?.slice(0, 7)}...{wagmiAddress?.slice(-6)}
             </p>
           </div>
 

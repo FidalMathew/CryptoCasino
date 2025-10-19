@@ -14,6 +14,8 @@ interface GlobalContextProps {
     predictedPrice: number
   ) => Promise<void>;
   getGameFromId?: (id: string) => Promise<Game | undefined>;
+  farcasterAccount?: string | null;
+  setFarcasterAccount?: (account: string | null) => void;
 }
 
 export const GlobalContext = createContext<GlobalContextProps>({
@@ -24,4 +26,6 @@ export const GlobalContext = createContext<GlobalContextProps>({
   game: undefined,
   joinGame: async () => {},
   getGameFromId: async () => undefined,
+  farcasterAccount: null,
+  setFarcasterAccount: () => {},
 });

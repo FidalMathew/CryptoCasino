@@ -1,7 +1,7 @@
 import useGlobalContext from "@/context/useGlobalContext";
 import { Users, Trophy, Coins } from "lucide-react";
 import { useEffect, useState } from "react";
-import { formatEther, parseEther, zeroAddress } from "viem";
+import { formatEther, zeroAddress } from "viem";
 
 interface GameCardProps {
   gameId: string;
@@ -114,7 +114,7 @@ export function GameCard({ gameId }: GameCardProps) {
               Final Price:
             </span>
             <span className="text-sm sm:text-lg font-bold text-green-400">
-              {game.finalPrice.toString()}
+              {(Number(game.finalPrice) / 1e8).toString()}
             </span>
           </div>
           {game.winner && game.winner !== zeroAddress && (
