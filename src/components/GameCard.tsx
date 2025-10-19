@@ -1,7 +1,7 @@
 import useGlobalContext from "@/context/useGlobalContext";
 import { Users, Trophy, Coins } from "lucide-react";
 import { useEffect, useState } from "react";
-import { zeroAddress } from "viem";
+import { formatEther, parseEther, zeroAddress } from "viem";
 
 interface GameCardProps {
   gameId: string;
@@ -102,7 +102,7 @@ export function GameCard({ gameId }: GameCardProps) {
             <span className="text-xs text-gray-400">Bet</span>
           </div>
           <p className="text-base sm:text-lg font-bold text-white">
-            {game.fixedBetAmount.toString()}
+            {formatEther(game.fixedBetAmount).toString()} Tokens
           </p>
         </div>
       </div>

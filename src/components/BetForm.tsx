@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Wallet, TrendingUp } from "lucide-react";
+import { Wallet, TrendingUp, X } from "lucide-react";
+import { toast } from "sonner";
 
 interface BetFormProps {
   onSubmitBet: (
@@ -20,44 +21,101 @@ export const BetForm = ({
   const [predictedPrice, setPredictedPrice] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const handleConnect = async () => {
     const mockAddress = `0x${Math.random().toString(16).substr(2, 8)}...${Math.random().toString(16).substr(2, 4)}`;
     setWalletAddress(mockAddress);
     setIsConnected(true);
+    toast.success("Wallet connected successfully!");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!isConnected) {
-      alert("Please connect your wallet first");
+      toast.error("Please connect your wallet first");
       return;
     }
 
     if (!predictedPrice || parseFloat(predictedPrice) <= 0) {
-      alert("Please enter a valid price prediction");
+      toast.error("Please enter a valid price prediction");
       return;
     }
 
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmBet = () => {
     const mockSignature = `sig_${Math.random().toString(36).substr(2, 9)}`;
 
-    const confirmed = window.confirm(
-      `Sign delegation to allow smart contract to deduct ${betAmount} tokens if you lose?\n\nYour prediction: $${predictedPrice}\nBet amount: ${betAmount} tokens`
+    onSubmitBet(
+      parseFloat(betAmount),
+      parseFloat(predictedPrice),
+      mockSignature
     );
-
-    if (confirmed) {
-      onSubmitBet(
-        parseFloat(betAmount),
-        parseFloat(predictedPrice),
-        mockSignature
-      );
-      setPredictedPrice("");
-    }
+    setPredictedPrice("");
+    setShowConfirmModal(false);
+    toast.success("Bet placed successfully!");
   };
 
   return (
-    <div className="bg-gray-800 rounded-xl p-4 sm:p-6 border-2 border-gray-700">
+    <div className="bg-gray-800 rounded-xl p-4 sm:p-6 border-2 border-gray-700 relative">
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-gray-800 rounded-2xl p-6 max-w-md w-full border-2 border-gray-700 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-xl font-bold text-white">Confirm Your Bet</h3>
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+                <p className="text-sm text-gray-400 mb-1">Your Prediction</p>
+                <p className="text-2xl font-bold text-white">
+                  ${predictedPrice}
+                </p>
+              </div>
+
+              <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+                <p className="text-sm text-gray-400 mb-1">Bet Amount</p>
+                <p className="text-2xl font-bold text-green-400">
+                  {betAmount} tokens
+                </p>
+              </div>
+
+              <div className="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4">
+                <p className="text-sm text-yellow-400 leading-relaxed">
+                  By confirming, you authorize the smart contract to deduct{" "}
+                  {betAmount} tokens if you lose.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmBet}
+                className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg"
+              >
+                Confirm & Sign
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {!isConnected ? (
         <button
           onClick={handleConnect}
