@@ -25,7 +25,7 @@ export const GameInfo = ({ game, players, totalPrizePool }: GameInfoProps) => {
           <span className="text-xs sm:text-sm text-gray-400">Players</span>
         </div>
         <p className="text-xl sm:text-2xl font-bold text-white">
-          {game.current_players} / {game.min_players}
+          {game.current_players}
         </p>
       </div>
 
@@ -55,7 +55,16 @@ export const GameInfo = ({ game, players, totalPrizePool }: GameInfoProps) => {
           <span className="text-xs sm:text-sm text-gray-400">Status</span>
         </div>
         <p className="text-base sm:text-lg font-bold text-white capitalize">
-          {game.status}
+          {(() => {
+            if (!game.end_time) return "No end time";
+            const remainingMs = new Date(game.end_time).getTime() - Date.now();
+            if (remainingMs <= 0) return "Game ended";
+            const totalSeconds = Math.floor(remainingMs / 1000);
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            const s = totalSeconds % 60;
+            return `${h}h ${m}m ${s}s`;
+          })()}
         </p>
       </div>
     </div>

@@ -14,7 +14,7 @@ import { gameAbi } from "@/lib/gameAbi";
 import { Game } from "@/types/game";
 
 const account = privateKeyToAccount(import.meta.env.VITE_PRIVATE_KEY!);
-const CONTRACT_ADDRESS = "0xE6D80c970648929CA033cB663bBab587EA105eEd";
+const CONTRACT_ADDRESS = "0x80329bC3872aa52bCEb0b1E7d7B11D52845362F3";
 
 export const config = createConfig({
   chains: [sepolia],

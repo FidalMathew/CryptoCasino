@@ -116,7 +116,9 @@ function Game() {
   const losers = players.filter((p) => !p.is_winner);
 
   const totalPrizePool = game?.totalPool ? Number(game.totalPool) / 1e18 : 0;
-  const actualPrice = game?.finalPrice ? Number(game.finalPrice) / 1e18 : null;
+  const actualPrice = game?.finalPrice ? Number(game.finalPrice) / 1e8 : null;
+
+  console.log(Number(game?.finalPrice) / 1e8, "final");
 
   if (loading) {
     return (
@@ -170,7 +172,7 @@ function Game() {
         <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl p-6 sm:p-8 mb-6 border-2 border-gray-700 shadow-2xl">
           <div className="text-center mb-6">
             <h2 className="text-base sm:text-lg text-gray-400 mb-4">
-              {game?.symbol || "COIN"} Price
+              {game?.symbol || "COIN"} Price (USD)
             </h2>
             <SlotMachine
               finalPrice={actualPrice || 0}
@@ -182,10 +184,10 @@ function Game() {
           {showResults && actualPrice !== null && (
             <div className="mt-6 bg-green-900/30 border-2 border-green-700 rounded-xl p-4 text-center">
               <p className="text-lg sm:text-xl font-bold text-green-400">
-                Game Complete! Actual Price: ${actualPrice.toFixed(5)}
+                Game Complete! Actual Price: ${actualPrice.toFixed(6)} USD
               </p>
               <p className="text-sm text-gray-300 mt-2">
-                Winner receives {totalPrizePool.toFixed(2)} tokens!
+                Winner receives {totalPrizePool} tokens!
               </p>
             </div>
           )}

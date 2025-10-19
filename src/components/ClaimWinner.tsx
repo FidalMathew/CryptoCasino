@@ -102,7 +102,7 @@ export const ClaimWinner = ({
         <div className="flex justify-between items-center">
           <span className="text-gray-400 text-sm">Predicted Price:</span>
           <span className="text-white font-semibold">
-            ${winner.predicted_price.toFixed(5)}
+            ${winner.predicted_price.toFixed(6)} USD
           </span>
         </div>
         <div className="flex justify-between items-center">

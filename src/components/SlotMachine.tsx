@@ -11,21 +11,27 @@ export const SlotMachine = ({
   isSpinning,
   onSpinComplete,
 }: SlotMachineProps) => {
-  const [displayPrice, setDisplayPrice] = useState("0.00000");
-  const [spinCount, setSpinCount] = useState(0);
+  const [displayPrice, setDisplayPrice] = useState("000000.0000");
+
+  const formatPrice = (price: number): string => {
+    // Ensure the price has exactly 6 digits before and 4 digits after decimal
+    const formatted = price.toFixed(4);
+    const [integerPart, decimalPart] = formatted.split(".");
+    // Pad integer part with leading zeros to make it 6 digits
+    const paddedInteger = integerPart.padStart(6, "0");
+    return `${paddedInteger}.${decimalPart}`;
+  };
 
   useEffect(() => {
     if (isSpinning) {
-      setSpinCount(0);
       const interval = setInterval(() => {
-        const randomPrice = (Math.random() * 0.5).toFixed(5);
-        setDisplayPrice(randomPrice);
-        setSpinCount((prev) => prev + 1);
+        const randomPrice = Math.random() * 999999.9999;
+        setDisplayPrice(formatPrice(randomPrice));
       }, 100);
 
       const timeout = setTimeout(() => {
         clearInterval(interval);
-        setDisplayPrice(finalPrice.toFixed(5));
+        setDisplayPrice(formatPrice(finalPrice));
         onSpinComplete?.();
       }, 3000);
 
@@ -34,24 +40,24 @@ export const SlotMachine = ({
         clearTimeout(timeout);
       };
     } else {
-      setDisplayPrice(finalPrice.toFixed(5));
+      setDisplayPrice(formatPrice(finalPrice));
     }
   }, [isSpinning, finalPrice, onSpinComplete]);
 
   const digits = displayPrice.split("");
 
   return (
-    <div className="flex items-center justify-center gap-1 sm:gap-2">
+    <div className="flex items-center justify-center gap-0.5 sm:gap-1">
       {digits.map((digit, index) => (
         <div
           key={index}
           className={`
-            ${digit === "." ? "w-3 sm:w-4" : "w-10 sm:w-16 md:w-20"}
-            h-14 sm:h-20 md:h-24
+            ${digit === "." ? "w-2 sm:w-3" : "w-8 sm:w-12 md:w-16"}
+            h-12 sm:h-16 md:h-20
             ${
               digit === "."
                 ? "flex items-end pb-2 sm:pb-3"
-                : "bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg shadow-lg border-2 border-gray-700"
+                : "bg-gradient-to-b from-gray-800 to-gray-900 rounded-md shadow-lg border-2 border-gray-700"
             }
             flex items-center justify-center
             ${isSpinning && digit !== "." ? "animate-pulse" : ""}
@@ -62,8 +68,8 @@ export const SlotMachine = ({
               font-bold text-yellow-400
               ${
                 digit === "."
-                  ? "text-3xl sm:text-4xl md:text-5xl"
-                  : "text-2xl sm:text-4xl md:text-5xl"
+                  ? "text-2xl sm:text-3xl md:text-4xl"
+                  : "text-xl sm:text-3xl md:text-4xl"
               }
               ${isSpinning && digit !== "." ? "blur-sm" : ""}
               transition-all duration-100

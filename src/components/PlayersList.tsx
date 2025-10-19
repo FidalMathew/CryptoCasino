@@ -66,7 +66,7 @@ export const PlayersList = ({
                   <div className="text-right">
                     <p className="text-xs text-gray-400">Prediction</p>
                     <p className="text-sm font-semibold text-white">
-                      ${player.predicted_price.toFixed(5)}
+                      ${player.predicted_price.toFixed(6)}
                     </p>
                   </div>
 
@@ -74,7 +74,7 @@ export const PlayersList = ({
                     <div className="text-right">
                       <p className="text-xs text-gray-400">Diff</p>
                       <p className="text-sm font-semibold text-red-400">
-                        {difference.toFixed(5)}
+                        {difference.toFixed(6)}
                       </p>
                     </div>
                   )}

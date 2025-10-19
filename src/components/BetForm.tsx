@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Wallet, TrendingUp, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Game } from "@/types/game";
-import { type Address, parseEther } from "viem";
+import { type Address, formatEther, parseEther } from "viem";
 import useGlobalContext from "@/context/useGlobalContext";
 import { useParams } from "react-router-dom";
 
@@ -115,7 +115,7 @@ export const BetForm = ({ onSubmitBet, game }: BetFormProps) => {
                 <p className="text-sm text-gray-400 mb-1">Bet Amount</p>
                 <p className="text-2xl font-bold text-green-400">
                   {game?.fixedBetAmount
-                    ? (Number(game.fixedBetAmount) / 1e18).toFixed(2)
+                    ? formatEther(game.fixedBetAmount)
                     : "0"}{" "}
                   tokens
                 </p>
@@ -125,7 +125,7 @@ export const BetForm = ({ onSubmitBet, game }: BetFormProps) => {
                 <p className="text-sm text-yellow-400 leading-relaxed">
                   By confirming, you authorize the smart contract to deduct{" "}
                   {game?.fixedBetAmount
-                    ? (Number(game.fixedBetAmount) / 1e18).toFixed(2)
+                    ? formatEther(game.fixedBetAmount)
                     : "0"}{" "}
                   tokens if you lose.
                 </p>
@@ -162,7 +162,9 @@ export const BetForm = ({ onSubmitBet, game }: BetFormProps) => {
         <div className="space-y-4">
           <div className="bg-gray-900 rounded-lg p-3 border border-gray-700">
             <p className="text-xs text-gray-400 mb-1">Connected Wallet</p>
-            <p className="text-sm font-mono text-green-400">{walletAddress}</p>
+            <p className="text-sm font-mono text-green-400">
+              {walletAddress.slice(0, 7)}...{walletAddress.slice(-6)}
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -174,7 +176,7 @@ export const BetForm = ({ onSubmitBet, game }: BetFormProps) => {
                 type="text"
                 value={
                   game?.fixedBetAmount
-                    ? (Number(game.fixedBetAmount) / 1e18).toFixed(2)
+                    ? formatEther(game.fixedBetAmount).toString()
                     : "0"
                 }
                 disabled={true}
@@ -184,18 +186,21 @@ export const BetForm = ({ onSubmitBet, game }: BetFormProps) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Predict {game?.symbol || "COIN"} Price
+                Predict {game?.symbol || "COIN"} Price (USD)
               </label>
               <input
                 type="number"
                 value={predictedPrice}
                 onChange={(e) => setPredictedPrice(e.target.value)}
-                placeholder="0.00000"
-                step="0.00001"
+                placeholder="0.000000"
+                step="0.000001"
                 min="0"
                 className="w-full bg-gray-900 border-2 border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
                 disabled={!game?.active || game?.resolved}
               />
+              <p className="text-xs text-gray-400 mt-1">
+                Enter price in USD (e.g., 123.456789)
+              </p>
             </div>
 
             <button
