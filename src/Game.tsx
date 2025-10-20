@@ -1,18 +1,18 @@
+import { ArrowLeft, Dices, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Dices, RefreshCw, ArrowLeft } from "lucide-react";
-import { type Game as GameType, PlayerBet } from "./types/game";
-import { SlotMachine } from "./components/SlotMachine";
-import { BetForm } from "./components/BetForm";
-import { GameInfo } from "./components/GameInfo";
-import { PlayersList } from "./components/PlayersList";
-import { ClaimWinner } from "./components/ClaimWinner";
-import useGlobalContext from "./context/useGlobalContext";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Delegation } from "./utils/Delegation";
-import { sepolia } from "viem/chains";
 import type { Address, Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { monadTestnet } from "viem/chains";
+import { BetForm } from "./components/BetForm";
+import { ClaimWinner } from "./components/ClaimWinner";
+import { GameInfo } from "./components/GameInfo";
+import { PlayersList } from "./components/PlayersList";
+import { SlotMachine } from "./components/SlotMachine";
+import useGlobalContext from "./context/useGlobalContext";
+import { type Game as GameType, PlayerBet } from "./types/game";
+import { Delegation } from "./utils/Delegation";
 
 const account = privateKeyToAccount(import.meta.env.VITE_PRIVATE_KEY as Hex);
 const account1 = privateKeyToAccount(import.meta.env.VITE_PRIVATE_KEY1 as Hex);
@@ -67,7 +67,7 @@ function Game() {
           );
           if (playerAddresses.length > 0) {
             const delegationInstance = new Delegation(
-              sepolia,
+              monadTestnet,
               playerAddresses,
               Number(id)
             );
@@ -125,7 +125,7 @@ function Game() {
         if (playerAddresses.length > 0) {
           // Create new delegation instance or update existing one
           const delegationInstance = new Delegation(
-            sepolia,
+            monadTestnet,
             playerAddresses,
             Number(id)
           );
@@ -167,7 +167,7 @@ function Game() {
         account: account,
         to: account1.address,
         value: totalAmount,
-        chain: sepolia,
+        chain: monadTestnet,
       });
 
       setPrizeClaimed(true);
