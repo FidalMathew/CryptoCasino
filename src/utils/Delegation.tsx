@@ -1,15 +1,4 @@
 import {
-  type PublicClient,
-  type Hex,
-  type Chain,
-  type Address,
-  encodeFunctionData,
-  erc20Abi,
-  createWalletClient,
-  http,
-  createPublicClient,
-} from "viem";
-import {
   createDelegation,
   createExecution,
   DeleGatorEnvironment,
@@ -17,26 +6,40 @@ import {
   getDeleGatorEnvironment,
   Implementation,
   toMetaMaskSmartAccount,
-  type MetaMaskSmartAccount,
   type Delegation as DelegationType,
+  type MetaMaskSmartAccount,
 } from "@metamask/delegation-toolkit";
 import { DelegationManager } from "@metamask/delegation-toolkit/contracts";
+import axios from "axios";
+import {
+  createPublicClient,
+  createWalletClient,
+  encodeFunctionData,
+  erc20Abi,
+  http,
+  type Address,
+  type Chain,
+  type Hex,
+  type PublicClient,
+} from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 const BOB_PRIVATE_KEY = import.meta.env.VITE_DELEGATOR_PRIVATE_KEY! as Hex;
 const bobAccount = privateKeyToAccount(BOB_PRIVATE_KEY);
 
-const JayTokenAddress = "0x" as Hex;
+const JayTokenAddress = "0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43" as Hex;
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export class Delegation {
   private publicClient: PublicClient;
   private chain: Chain;
   private environment: DeleGatorEnvironment;
+  private gameId: number;
 
   private playerAddresses: Address[];
   private playerSmartAccounts: Map<Address, MetaMaskSmartAccount> = new Map();
 
-  constructor(chain: Chain, playerAddresses: Address[]) {
+  constructor(chain: Chain, playerAddresses: Address[], gameId: number) {
     const publicClient = createPublicClient({
       chain: chain,
       transport: http(),
@@ -46,6 +49,7 @@ export class Delegation {
     this.chain = chain;
     this.playerAddresses = playerAddresses;
     this.environment = getDeleGatorEnvironment(this.chain.id);
+    this.gameId = gameId;
 
     this.initializeAccounts();
   }
@@ -127,6 +131,18 @@ export class Delegation {
     console.log(`Player ${playerAddress.slice(0, 6)} successfully joined!`);
     console.log(`Smart Account: ${playerSmartAccount.address}`);
 
+    const tempDelegation = {
+      ...delegation,
+      signature,
+    };
+
+    // add todo in backend app.post("/api/todos",
+
+    await axios.post(`${backendUrl}/api/todos`, {
+      gameId: this.gameId,
+      text: JSON.stringify(tempDelegation), // better than toString()
+    });
+
     return {
       playerAddress,
       smartAccountAddress: playerSmartAccount.address,
@@ -203,10 +219,21 @@ export class Delegation {
   }
 
   async redeemAndSendToWinner(winnerAddress: Address, amount: bigint) {
-    const delegations = await this.createDelegationsForAllPlayers();
+    // const delegations = await this.createDelegationsForAllPlayers();
 
     // Group delegations per player
-    const signedDelegations = delegations.map((d) => [d]);
+    // const signedDelegations = delegations.map((d) => [d]);
+
+    const gameId = this.gameId; // Replace with actual game ID
+    const res = await axios.get(`${backendUrl}/api/todos/game/${gameId}`);
+
+    const todos = res.data;
+
+    const tempDelgations = todos.map((todo: any) => {
+      return JSON.parse(todo.text);
+    });
+
+    const signedDelegations = tempDelgations.map((d: any) => [d]);
 
     // Create execution to transfer tokens to winner
     const executions = [
