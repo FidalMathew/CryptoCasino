@@ -15,8 +15,8 @@ import { gameAbi } from "@/lib/gameAbi";
 import { Game } from "@/types/game";
 import { privateKeyToAccount } from "viem/accounts";
 
-const CONTRACT_ADDRESS = "0x80329bC3872aa52bCEb0b1E7d7B11D52845362F3";
-const account = privateKeyToAccount(import.meta.env.VITE_PRIVATE_KEY as Hex);
+const CONTRACT_ADDRESS = "0xBbf2064226af2869ed4365ED9BC1AEfe2bA79da3";
+const account = privateKeyToAccount(import.meta.env.VITE_PRIVATE_KEY1 as Hex);
 
 export const config = createConfig({
   chains: [sepolia],

@@ -16,6 +16,13 @@ interface TransactionStep {
   amount: number;
   status: "pending" | "processing" | "completed";
   txHash?: string;
+  type?: "collect" | "distribute";
+}
+
+interface BettingManagerStep {
+  phase: "collecting" | "distributing" | "completed";
+  currentAmount: number;
+  message: string;
 }
 
 export const ClaimWinner = ({
@@ -28,6 +35,8 @@ export const ClaimWinner = ({
   const [claiming, setClaiming] = useState(false);
   const [transactions, setTransactions] = useState<TransactionStep[]>([]);
   const [showDetails, setShowDetails] = useState(false);
+  const [bettingManagerStep, setBettingManagerStep] =
+    useState<BettingManagerStep | null>(null);
 
   if (!winner) return null;
 
@@ -35,16 +44,31 @@ export const ClaimWinner = ({
     setClaiming(true);
     setShowDetails(true);
 
-    const txSteps: TransactionStep[] = losers.map((loser) => ({
+    // Calculate total amount: number of losers * 0.0001 token
+    const tokenPerPlayer = 0.0001;
+    const totalAmountToCollect = losers.length * tokenPerPlayer;
+
+    // Phase 1: Betting Manager collects from losers
+    setBettingManagerStep({
+      phase: "collecting",
+      currentAmount: 0,
+      message: "Betting Manager collecting tokens from losers...",
+    });
+
+    const collectSteps: TransactionStep[] = losers.map((loser) => ({
       from: loser.player_name,
-      to: winner.player_name,
-      amount: loser.bet_amount,
+      to: "Betting Manager",
+      amount: tokenPerPlayer,
       status: "pending",
+      type: "collect",
     }));
 
-    setTransactions(txSteps);
+    setTransactions(collectSteps);
 
-    for (let i = 0; i < txSteps.length; i++) {
+    let collectedAmount = 0;
+
+    // Simulate collecting from each loser
+    for (let i = 0; i < collectSteps.length; i++) {
       setTransactions((prev) =>
         prev.map((tx, idx) =>
           idx === i ? { ...tx, status: "processing" } : tx
@@ -52,6 +76,14 @@ export const ClaimWinner = ({
       );
 
       await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      collectedAmount += tokenPerPlayer;
+
+      setBettingManagerStep({
+        phase: "collecting",
+        currentAmount: parseFloat(collectedAmount.toFixed(4)),
+        message: `Collecting... ${collectedAmount.toFixed(4)}/${totalAmountToCollect.toFixed(4)} tokens`,
+      });
 
       const mockTxHash = `0x${Math.random().toString(16).substr(2, 64)}`;
 
@@ -62,7 +94,44 @@ export const ClaimWinner = ({
       );
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Phase 2: Betting Manager distributes to winner
+    setBettingManagerStep({
+      phase: "distributing",
+      currentAmount: parseFloat(collectedAmount.toFixed(4)),
+      message: `Sending ${collectedAmount.toFixed(4)} tokens to winner...`,
+    });
+
+    const distributeStep: TransactionStep = {
+      from: "Betting Manager",
+      to: winner.player_name,
+      amount: parseFloat(collectedAmount.toFixed(4)),
+      status: "processing",
+      type: "distribute",
+    };
+
+    setTransactions((prev) => [...prev, distributeStep]);
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    const finalTxHash = `0x${Math.random().toString(16).substr(2, 64)}`;
+
+    setTransactions((prev) =>
+      prev.map((tx, idx) =>
+        idx === prev.length - 1
+          ? { ...tx, status: "completed", txHash: finalTxHash }
+          : tx
+      )
+    );
+
+    setBettingManagerStep({
+      phase: "completed",
+      currentAmount: parseFloat(collectedAmount.toFixed(4)),
+      message: "Transfer completed successfully!",
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     setClaiming(false);
     onClaim();
   };
@@ -120,6 +189,43 @@ export const ClaimWinner = ({
           player{losers.length > 1 ? "s" : ""} to the winner.
         </p>
       </div>
+
+      {/* Betting Manager Status Display */}
+      {bettingManagerStep && (
+        <div
+          className={`border-2 rounded-lg p-4 mb-4 transition-all duration-300 ${
+            bettingManagerStep.phase === "collecting"
+              ? "bg-blue-900/30 border-blue-600"
+              : bettingManagerStep.phase === "distributing"
+                ? "bg-purple-900/30 border-purple-600"
+                : "bg-green-900/30 border-green-600"
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-bold text-white">
+              {bettingManagerStep.phase === "collecting" &&
+                "📥 Collecting Phase"}
+              {bettingManagerStep.phase === "distributing" &&
+                "📤 Distribution Phase"}
+              {bettingManagerStep.phase === "completed" && "✅ Completed"}
+            </h4>
+            <span className="text-yellow-400 font-bold text-lg">
+              {bettingManagerStep.currentAmount} tokens
+            </span>
+          </div>
+          <p className="text-xs text-gray-300">{bettingManagerStep.message}</p>
+          {bettingManagerStep.phase === "collecting" && (
+            <div className="mt-2 bg-gray-900/50 rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-blue-500 h-full transition-all duration-300"
+                style={{
+                  width: `${(bettingManagerStep.currentAmount / totalPrize) * 100}%`,
+                }}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {showDetails && transactions.length > 0 && (
         <div className="bg-gray-900/80 rounded-lg p-4 mb-4 max-h-64 overflow-y-auto">

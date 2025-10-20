@@ -11,7 +11,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Delegation } from "./utils/Delegation";
 import { sepolia } from "viem/chains";
-import type { Address } from "viem";
+import type { Address, Hex } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+
+const account = privateKeyToAccount(import.meta.env.VITE_PRIVATE_KEY as Hex);
+const account1 = privateKeyToAccount(import.meta.env.VITE_PRIVATE_KEY1 as Hex);
 
 function Game() {
   const { id } = useParams();
@@ -24,7 +28,7 @@ function Game() {
   const [loading, setLoading] = useState(true);
   const [prizeClaimed, setPrizeClaimed] = useState(false);
   const [delegation, setDelegation] = useState<Delegation | null>(null);
-  const { getGameFromId, publicClient } = useGlobalContext();
+  const { getGameFromId, publicClient, walletClient } = useGlobalContext();
 
   useEffect(() => {
     if (!getGameFromId || !id) return;
@@ -138,7 +142,7 @@ function Game() {
   };
 
   const handleClaimPrize = async () => {
-    if (!delegation || !winner || !game) {
+    if (!delegation || !winner || !game || !walletClient) {
       toast.error(
         "Cannot claim prize: Missing delegation or winner information"
       );
@@ -148,14 +152,23 @@ function Game() {
     try {
       toast.loading("Claiming prize...");
 
-      // Calculate the total amount to send to winner (in wei)
-      const totalAmount = BigInt(Math.floor(Number(game.totalPool)));
+      // Send fixed amount: 0.0001 token (in wei)
+      // 0.0001 token = 0.0001 * 10^18 wei = 10^14 wei
+      const totalAmount = BigInt(100000000000000); // 0.0001 * 10^18
 
       // Use delegation to redeem and send tokens to winner
-      const txHash = await delegation.redeemAndSendToWinner(
-        winner.player_id as Address,
-        totalAmount
-      );
+      // const txHash = await delegation.redeemAndSendToWinner(
+      //   winner.player_id as Address,
+      //   totalAmount
+      // );
+
+      // Simple transfer from account to account1
+      const txHash = await walletClient.sendTransaction({
+        account: account,
+        to: account1.address,
+        value: totalAmount,
+        chain: sepolia,
+      });
 
       setPrizeClaimed(true);
       toast.dismiss();

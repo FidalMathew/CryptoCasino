@@ -92,7 +92,7 @@ export function GameCard({ gameId }: GameCardProps) {
             <span className="text-xs text-gray-400">Players</span>
           </div>
           <p className="text-base sm:text-lg font-bold text-white">
-            {playerCount}/{maxPlayers}
+            {playerCount}
           </p>
         </div>
 

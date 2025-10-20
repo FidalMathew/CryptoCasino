@@ -21,16 +21,16 @@ export const GameInfo = ({ game, totalPrizePool }: GameInfoProps) => {
         Math.floor((new Date(game.start_time).getTime() - Date.now()) / 1000)
       )
     : 0;
-  useEffect(() => {
-    if (!resolveGame || !game || hasError) return;
-    if (timeUntilStart === 0 && game.status === "active") {
-      try {
-        resolveGame(game.id);
-      } catch (error) {
-        setHasError(true);
-      }
-    }
-  }, [timeUntilStart, game?.id, game?.status, resolveGame, hasError]);
+  // useEffect(() => {
+  //   if (!resolveGame || !game || hasError) return;
+  //   if (timeUntilStart === 0 && game.status === "active") {
+  //     try {
+  //       resolveGame(game.id);
+  //     } catch (error) {
+  //       setHasError(true);
+  //     }
+  //   }
+  // }, [timeUntilStart, game?.id, game?.status, resolveGame, hasError]);
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
