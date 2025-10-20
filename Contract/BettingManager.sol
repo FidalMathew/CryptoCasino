@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MemecoinGuessGame is Ownable {
     uint256 public constant JOIN_DURATION = 10 minutes;
-    uint256 public constant TOTAL_DURATION = 11 minutes;
+    uint256 public constant TOTAL_DURATION = 20 minutes;
 
     uint256 public nextGameId;
     address public delegateAccount; // fallback if winner doesn't claim
