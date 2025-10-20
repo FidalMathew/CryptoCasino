@@ -20,7 +20,7 @@ function Home() {
               </div>
               <div>
                 <h1 className="text-lg sm:text-2xl font-bold text-white">
-                  Memecoin Casino
+                  Crypto Casino
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-400">
                   Predict & Win
