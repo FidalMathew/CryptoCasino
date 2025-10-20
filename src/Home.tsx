@@ -27,14 +27,6 @@ function Home() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center">
-              <div className="bg-gray-800 rounded-lg px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-700">
-                <p className="text-xs text-gray-400">Balance</p>
-                <p className="text-sm sm:text-lg font-bold text-yellow-400">
-                  1,000
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
