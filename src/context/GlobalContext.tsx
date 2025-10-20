@@ -1,6 +1,5 @@
-import { privateKeyToAccount } from "viem/accounts";
 import { sepolia } from "viem/chains";
-import { createConfig, http } from "wagmi";
+import { createConfig, http, useConnect, useAccount } from "wagmi";
 import { ReactNode, useEffect, useState } from "react";
 import {
   createPublicClient,
@@ -8,12 +7,12 @@ import {
   PublicClient,
   WalletClient,
 } from "viem";
+import { toast } from "sonner";
 import { gameabi } from "@/lib/abi";
 import { GlobalContext } from "./GlobalContextExport";
 import { gameAbi } from "@/lib/gameAbi";
 import { Game } from "@/types/game";
 
-const account = privateKeyToAccount(import.meta.env.VITE_PRIVATE_KEY!);
 const CONTRACT_ADDRESS = "0x80329bC3872aa52bCEb0b1E7d7B11D52845362F3";
 
 export const config = createConfig({
@@ -32,6 +31,8 @@ export default function GlobalContextProvider({
   const [walletClient, setWalletClient] = useState<WalletClient | undefined>();
   const [game, setGame] = useState<Game[] | undefined>();
   const [farcasterAccount, setFarcasterAccount] = useState<string | null>(null);
+  const { connectors, connect } = useConnect();
+  const { address: account, connector } = useAccount();
 
   useEffect(() => {
     const publicClient = createPublicClient({
@@ -41,14 +42,16 @@ export default function GlobalContextProvider({
 
     setPublicClient(publicClient);
 
-    const walletClient = createWalletClient({
-      account,
-      chain: sepolia,
-      transport: http(),
-    });
+    if (account && connector) {
+      const walletClient = createWalletClient({
+        account,
+        chain: sepolia,
+        transport: http(),
+      });
 
-    setWalletClient(walletClient);
-  }, [account]);
+      setWalletClient(walletClient);
+    }
+  }, [account, connector]);
 
   useEffect(() => {
     if (!publicClient || !walletClient) return;
@@ -127,6 +130,7 @@ export default function GlobalContextProvider({
   const joinGame = async () => {
     if (!walletClient) return;
     if (!publicClient) return;
+    if (!account) return;
 
     const tx = await walletClient.writeContract({
       address: CONTRACT_ADDRESS,
@@ -208,6 +212,21 @@ export default function GlobalContextProvider({
     };
   };
 
+  const handleConnect = async () => {
+    try {
+      if (connectors.length === 0) {
+        toast.error("No wallet connectors available");
+        return;
+      }
+
+      await connect({ connector: connectors[0] });
+      toast.success("Wallet connected successfully!");
+    } catch (error) {
+      console.error("Connection error:", error);
+      toast.error("Failed to connect wallet");
+    }
+  };
+
   return (
     <GlobalContext.Provider
       value={{
@@ -221,6 +240,8 @@ export default function GlobalContextProvider({
         game,
         joinGame,
         getGameFromId,
+
+        handleConnect,
       }}
     >
       {children}

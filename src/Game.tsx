@@ -315,7 +315,11 @@ function Game() {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 gap-6 mb-6">
-            <BetForm onSubmitBet={handleSubmitBet} game={game} />
+            <BetForm
+              onSubmitBet={handleSubmitBet}
+              game={game}
+              delegation={delegation}
+            />
 
             <PlayersList
               players={players}

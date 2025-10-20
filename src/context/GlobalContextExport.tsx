@@ -1,9 +1,9 @@
 import { createContext } from "react";
-import { Account, PublicClient, WalletClient } from "viem";
+import { Hex, PublicClient, WalletClient } from "viem";
 import { Game } from "../types/game";
 
 interface GlobalContextProps {
-  account?: Account;
+  account?: Hex | undefined;
   CONTRACT_ADDRESS?: string;
   publicClient?: PublicClient;
   walletClient?: WalletClient;
@@ -16,6 +16,7 @@ interface GlobalContextProps {
   getGameFromId?: (id: string) => Promise<Game | undefined>;
   farcasterAccount?: string | null;
   setFarcasterAccount?: (account: string | null) => void;
+  handleConnect?: () => Promise<void>;
 }
 
 export const GlobalContext = createContext<GlobalContextProps>({
@@ -28,4 +29,5 @@ export const GlobalContext = createContext<GlobalContextProps>({
   getGameFromId: async () => undefined,
   farcasterAccount: null,
   setFarcasterAccount: () => {},
+  handleConnect: async () => {},
 });

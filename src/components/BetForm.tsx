@@ -5,39 +5,28 @@ import type { Game } from "@/types/game";
 import { formatEther, Hex, parseEther } from "viem";
 import useGlobalContext from "@/context/useGlobalContext";
 import { useParams } from "react-router-dom";
-import { useAccount, useConnect } from "wagmi";
 import { gameabi } from "@/lib/abi";
+import { Delegation } from "@/utils/Delegation";
+import { useAccount } from "wagmi";
 
 interface BetFormProps {
   onSubmitBet: (game: Game) => void;
   game: Game | null;
+  delegation: Delegation | null;
 }
 
-export const BetForm = ({ onSubmitBet, game }: BetFormProps) => {
+export const BetForm = ({ onSubmitBet, game, delegation }: BetFormProps) => {
   const { id } = useParams();
   const [predictedPrice, setPredictedPrice] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const { account, publicClient, walletClient, CONTRACT_ADDRESS } =
-    useGlobalContext();
-
-  // Use wagmi hooks at component level
+  const {
+    account,
+    publicClient,
+    walletClient,
+    CONTRACT_ADDRESS,
+    handleConnect,
+  } = useGlobalContext();
   const { address: wagmiAddress, isConnected } = useAccount();
-  const { connect, connectors } = useConnect();
-
-  const handleConnect = async () => {
-    try {
-      if (connectors.length === 0) {
-        toast.error("No wallet connectors available");
-        return;
-      }
-
-      await connect({ connector: connectors[0] });
-      toast.success("Wallet connected successfully!");
-    } catch (error) {
-      console.error("Connection error:", error);
-      toast.error("Failed to connect wallet");
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +55,11 @@ export const BetForm = ({ onSubmitBet, game }: BetFormProps) => {
       return;
     }
 
+    if (!wagmiAddress) {
+      toast.error("Wallet not connected");
+      return;
+    }
+
     try {
       toast.loading("Placing bet...");
 
@@ -81,11 +75,30 @@ export const BetForm = ({ onSubmitBet, game }: BetFormProps) => {
 
       await publicClient.waitForTransactionReceipt({ hash: tx });
 
+      toast.dismiss();
+      toast.loading("Setting up delegation...");
+
+      // Add player to delegation and sign delegation
+      if (delegation) {
+        try {
+          await delegation.addPlayerSmartAccount(wagmiAddress as Hex);
+          toast.dismiss();
+          toast.success("Bet placed and delegation signed successfully!");
+        } catch (delegationError) {
+          console.error("Delegation error:", delegationError);
+          toast.dismiss();
+          toast.warning(
+            "Bet placed but delegation setup failed. Please try again later."
+          );
+        }
+      } else {
+        toast.dismiss();
+        toast.success("Bet placed successfully!");
+      }
+
       onSubmitBet(game);
       setPredictedPrice("");
       setShowConfirmModal(false);
-      toast.dismiss();
-      toast.success("Bet placed successfully!");
     } catch (error) {
       toast.dismiss();
       toast.error("Failed to place bet");
