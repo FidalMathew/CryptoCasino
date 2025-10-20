@@ -1,4 +1,4 @@
-import { sepolia } from "viem/chains";
+import { monadTestnet } from "viem/chains";
 import { createConfig, http, useConnect, useAccount } from "wagmi";
 import { ReactNode, useEffect, useState } from "react";
 import {
@@ -16,9 +16,9 @@ import { Game } from "@/types/game";
 const CONTRACT_ADDRESS = "0x80329bC3872aa52bCEb0b1E7d7B11D52845362F3";
 
 export const config = createConfig({
-  chains: [sepolia],
+  chains: [monadTestnet],
   transports: {
-    [sepolia.id]: http(),
+    [monadTestnet.id]: http(),
   },
 });
 
@@ -36,7 +36,7 @@ export default function GlobalContextProvider({
 
   useEffect(() => {
     const publicClient = createPublicClient({
-      chain: sepolia,
+      chain: monadTestnet,
       transport: http(),
     });
 
@@ -45,7 +45,7 @@ export default function GlobalContextProvider({
     if (account && connector) {
       const walletClient = createWalletClient({
         account,
-        chain: sepolia,
+        chain: monadTestnet,
         transport: http(),
       });
 
@@ -138,7 +138,7 @@ export default function GlobalContextProvider({
       functionName: "joinGame",
       args: [1],
       account,
-      chain: sepolia,
+      chain: monadTestnet,
     });
 
     await publicClient.waitForTransactionReceipt({ hash: tx });

@@ -10,7 +10,7 @@ import useGlobalContext from "./context/useGlobalContext";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Delegation } from "./utils/Delegation";
-import { sepolia } from "viem/chains";
+import { monadTestnet } from "viem/chains";
 import type { Address } from "viem";
 
 function Game() {
@@ -63,7 +63,7 @@ function Game() {
           );
           if (playerAddresses.length > 0) {
             const delegationInstance = new Delegation(
-              sepolia,
+              monadTestnet,
               playerAddresses,
               Number(id)
             );
@@ -121,7 +121,7 @@ function Game() {
         if (playerAddresses.length > 0) {
           // Create new delegation instance or update existing one
           const delegationInstance = new Delegation(
-            sepolia,
+            monadTestnet,
             playerAddresses,
             Number(id)
           );

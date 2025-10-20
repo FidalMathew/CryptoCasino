@@ -273,7 +273,7 @@ export class Delegation {
     const bobsWalletClient = createWalletClient({
       chain: this.chain,
       account: bobAccount,
-      transport: http(`https://ethereum-sepolia-rpc.publicnode.com`),
+      transport: http(`https://ethereum-monadTestnet-rpc.publicnode.com`),
     });
 
     const transactionHash = await bobsWalletClient.sendTransaction({

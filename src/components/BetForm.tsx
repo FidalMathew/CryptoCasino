@@ -63,6 +63,8 @@ export const BetForm = ({ onSubmitBet, game, delegation }: BetFormProps) => {
     try {
       toast.loading("Placing bet...");
 
+      console.log("Placing bet for game ID:", id || game.id);
+
       // Call the joinGame function with the predicted price
       const tx = await walletClient.writeContract({
         address: CONTRACT_ADDRESS as Hex,
