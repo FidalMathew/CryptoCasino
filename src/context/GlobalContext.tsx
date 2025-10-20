@@ -1,6 +1,8 @@
-import { sepolia } from "viem/chains";
-import { createConfig, http, useConnect, useAccount } from "wagmi";
+import { gameabi } from "@/lib/abi";
+import { gameAbi } from "@/lib/gameAbi";
+import { Game } from "@/types/game";
 import { ReactNode, useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   createPublicClient,
   createWalletClient,
@@ -8,14 +10,12 @@ import {
   PublicClient,
   WalletClient,
 } from "viem";
-import { toast } from "sonner";
-import { gameabi } from "@/lib/abi";
-import { GlobalContext } from "./GlobalContextExport";
-import { gameAbi } from "@/lib/gameAbi";
-import { Game } from "@/types/game";
 import { privateKeyToAccount } from "viem/accounts";
+import { sepolia } from "viem/chains";
+import { createConfig, http, useAccount, useConnect } from "wagmi";
+import { GlobalContext } from "./GlobalContextExport";
 
-const CONTRACT_ADDRESS = "0x9f9224dbcf2c5d050c5c95fA87da5ce7CFAc8952";
+const CONTRACT_ADDRESS = "0x4217bFe6976c5F97E1a03720E47E766FF017bf01";
 const account = privateKeyToAccount(import.meta.env.VITE_PRIVATE_KEY1 as Hex);
 
 export const config = createConfig({
