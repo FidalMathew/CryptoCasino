@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Dices, RefreshCw } from "lucide-react";
+import { Dices, RefreshCw, ArrowLeft } from "lucide-react";
 import { type Game as GameType, PlayerBet } from "./types/game";
 import { SlotMachine } from "./components/SlotMachine";
 import { BetForm } from "./components/BetForm";
@@ -190,6 +190,15 @@ function Game() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
       <div className="container mx-auto px-4 py-4 sm:py-8 max-w-4xl">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-4 flex items-center gap-2 text-gray-400 hover:text-white transition-colors duration-200 group"
+        >
+          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-200" />
+          <span className="text-sm font-medium">Back</span>
+        </button>
+
         <div className="text-center mb-6 sm:mb-8">
           <div className="flex items-center justify-center gap-3 mb-3">
             <Dices className="w-8 h-8 sm:w-10 sm:h-10 text-yellow-400" />
