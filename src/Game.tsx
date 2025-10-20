@@ -9,6 +9,9 @@ import { ClaimWinner } from "./components/ClaimWinner";
 import useGlobalContext from "./context/useGlobalContext";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Delegation } from "./utils/Delegation";
+import { sepolia } from "viem/chains";
+import type { Address } from "viem";
 
 function Game() {
   const { id } = useParams();
@@ -20,6 +23,7 @@ function Game() {
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(true);
   const [prizeClaimed, setPrizeClaimed] = useState(false);
+  const [delegation, setDelegation] = useState<Delegation | null>(null);
   const { getGameFromId, publicClient } = useGlobalContext();
 
   useEffect(() => {
@@ -52,6 +56,19 @@ function Game() {
 
           setPlayers(playerBets);
           setShowResults(gameData.resolved);
+
+          // Initialize Delegation class with all player addresses
+          const playerAddresses = gameData.bets.map(
+            (bet: any) => bet.player as Address
+          );
+          if (playerAddresses.length > 0) {
+            const delegationInstance = new Delegation(
+              sepolia,
+              playerAddresses,
+              Number(id)
+            );
+            setDelegation(delegationInstance);
+          }
         }
         setLoading(false);
       } catch (error) {
@@ -96,6 +113,20 @@ function Game() {
         );
 
         setPlayers(playerBets);
+
+        // Update delegation with new players
+        const playerAddresses = updatedGame.bets.map(
+          (bet: any) => bet.player as Address
+        );
+        if (playerAddresses.length > 0) {
+          // Create new delegation instance or update existing one
+          const delegationInstance = new Delegation(
+            sepolia,
+            playerAddresses,
+            Number(id)
+          );
+          setDelegation(delegationInstance);
+        }
       }
     } catch (error) {
       console.error("Error refreshing game:", error);
@@ -107,9 +138,37 @@ function Game() {
   };
 
   const handleClaimPrize = async () => {
-    // TODO: Implement claim prize logic with smart contract
-    setPrizeClaimed(true);
-    toast.success("Prize claimed successfully!");
+    if (!delegation || !winner || !game) {
+      toast.error(
+        "Cannot claim prize: Missing delegation or winner information"
+      );
+      return;
+    }
+
+    try {
+      toast.loading("Claiming prize...");
+
+      // Calculate the total amount to send to winner (in wei)
+      const totalAmount = BigInt(Math.floor(Number(game.totalPool)));
+
+      // Use delegation to redeem and send tokens to winner
+      const txHash = await delegation.redeemAndSendToWinner(
+        winner.player_id as Address,
+        totalAmount
+      );
+
+      setPrizeClaimed(true);
+      toast.dismiss();
+      toast.success(
+        `Prize claimed successfully! TX: ${txHash.slice(0, 10)}...`
+      );
+    } catch (error) {
+      console.error("Error claiming prize:", error);
+      toast.dismiss();
+      toast.error(
+        `Failed to claim prize: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    }
   };
 
   const winner = players.find((p) => p.is_winner);
@@ -193,15 +252,69 @@ function Game() {
           )}
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-6">
-          <BetForm onSubmitBet={handleSubmitBet} game={game} />
+        {/* Show message if game ended without players */}
+        {(!game?.active || game?.resolved) && players.length === 0 ? (
+          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-8 sm:p-12 mb-6 border-2 border-gray-700 shadow-2xl">
+            <div className="text-center">
+              <div className="mb-6">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-yellow-500/20 rounded-full mb-4">
+                  <Dices className="w-10 h-10 text-yellow-400" />
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+                  Game Ended
+                </h3>
+                <p className="text-gray-400 text-lg mb-6">
+                  No players joined this game
+                </p>
+              </div>
 
-          <PlayersList
-            players={players}
-            actualPrice={actualPrice}
-            showResults={showResults}
-          />
-        </div>
+              <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-400 mb-1">Game Symbol</p>
+                    <p className="text-white font-semibold text-lg">
+                      {game?.symbol || "COIN"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 mb-1">Status</p>
+                    <p className="text-red-400 font-semibold text-lg">
+                      {game?.resolved ? "Completed" : "Ended"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 mb-1">Total Players</p>
+                    <p className="text-white font-semibold text-lg">0</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 mb-1">Prize Pool</p>
+                    <p className="text-white font-semibold text-lg">
+                      {totalPrizePool} tokens
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={handleNewGame}
+                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-8 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg mx-auto"
+              >
+                <RefreshCw className="w-5 h-5" />
+                View All Games
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
+            <BetForm onSubmitBet={handleSubmitBet} game={game} />
+
+            <PlayersList
+              players={players}
+              actualPrice={actualPrice}
+              showResults={showResults}
+            />
+          </div>
+        )}
 
         {game?.resolved && showResults && (
           <ClaimWinner
