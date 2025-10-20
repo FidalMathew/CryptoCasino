@@ -1,5 +1,7 @@
 import { Users, Clock, Trophy, Coins } from "lucide-react";
 import { BettingGame, PlayerBet } from "../types/game";
+import { useEffect, useState } from "react";
+import useGlobalContext from "@/context/useGlobalContext";
 
 interface GameInfoProps {
   game: BettingGame | null;
@@ -7,8 +9,11 @@ interface GameInfoProps {
   totalPrizePool: number;
 }
 
-export const GameInfo = ({ game, players, totalPrizePool }: GameInfoProps) => {
+export const GameInfo = ({ game, totalPrizePool }: GameInfoProps) => {
   if (!game) return null;
+
+  const { resolveGame } = useGlobalContext();
+  const [hasError, setHasError] = useState(false);
 
   const timeUntilStart = game.start_time
     ? Math.max(
@@ -16,6 +21,16 @@ export const GameInfo = ({ game, players, totalPrizePool }: GameInfoProps) => {
         Math.floor((new Date(game.start_time).getTime() - Date.now()) / 1000)
       )
     : 0;
+  useEffect(() => {
+    if (!resolveGame || !game || hasError) return;
+    if (timeUntilStart === 0 && game.status === "active") {
+      try {
+        resolveGame(game.id);
+      } catch (error) {
+        setHasError(true);
+      }
+    }
+  }, [timeUntilStart, game?.id, game?.status, resolveGame, hasError]);
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">

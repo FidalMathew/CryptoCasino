@@ -42,7 +42,7 @@ export class Delegation {
   constructor(chain: Chain, playerAddresses: Address[], gameId: number) {
     const publicClient = createPublicClient({
       chain: chain,
-      transport: http(),
+      transport: http(`https://ethereum-sepolia-rpc.publicnode.com`),
     });
 
     this.publicClient = publicClient;
@@ -168,7 +168,7 @@ export class Delegation {
       const walletClient = createWalletClient({
         account: bobAccount,
         chain: this.chain,
-        transport: http(),
+        transport: http(`https://ethereum-sepolia-rpc.publicnode.com`),
       });
 
       const hash = await walletClient.sendTransaction({
@@ -273,7 +273,7 @@ export class Delegation {
     const bobsWalletClient = createWalletClient({
       chain: this.chain,
       account: bobAccount,
-      transport: http(`https://ethereum-monadTestnet-rpc.publicnode.com`),
+      transport: http(`https://ethereum-sepolia-rpc.publicnode.com`),
     });
 
     const transactionHash = await bobsWalletClient.sendTransaction({

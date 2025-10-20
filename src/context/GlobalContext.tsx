@@ -1,9 +1,10 @@
-import { monadTestnet } from "viem/chains";
+import { sepolia } from "viem/chains";
 import { createConfig, http, useConnect, useAccount } from "wagmi";
 import { ReactNode, useEffect, useState } from "react";
 import {
   createPublicClient,
   createWalletClient,
+  Hex,
   PublicClient,
   WalletClient,
 } from "viem";
@@ -12,13 +13,15 @@ import { gameabi } from "@/lib/abi";
 import { GlobalContext } from "./GlobalContextExport";
 import { gameAbi } from "@/lib/gameAbi";
 import { Game } from "@/types/game";
+import { privateKeyToAccount } from "viem/accounts";
 
 const CONTRACT_ADDRESS = "0x80329bC3872aa52bCEb0b1E7d7B11D52845362F3";
+const account = privateKeyToAccount(import.meta.env.VITE_PRIVATE_KEY as Hex);
 
 export const config = createConfig({
-  chains: [monadTestnet],
+  chains: [sepolia],
   transports: {
-    [monadTestnet.id]: http(),
+    [sepolia.id]: http(`https://ethereum-sepolia-rpc.publicnode.com`),
   },
 });
 
@@ -32,12 +35,12 @@ export default function GlobalContextProvider({
   const [game, setGame] = useState<Game[] | undefined>();
   const [farcasterAccount, setFarcasterAccount] = useState<string | null>(null);
   const { connectors, connect } = useConnect();
-  const { address: account, connector } = useAccount();
+  const { connector } = useAccount();
 
   useEffect(() => {
     const publicClient = createPublicClient({
-      chain: monadTestnet,
-      transport: http(),
+      chain: sepolia,
+      transport: http(`https://ethereum-sepolia-rpc.publicnode.com`),
     });
 
     setPublicClient(publicClient);
@@ -45,8 +48,8 @@ export default function GlobalContextProvider({
     if (account && connector) {
       const walletClient = createWalletClient({
         account,
-        chain: monadTestnet,
-        transport: http(),
+        chain: sepolia,
+        transport: http(`https://ethereum-sepolia-rpc.publicnode.com`),
       });
 
       setWalletClient(walletClient);
@@ -127,7 +130,7 @@ export default function GlobalContextProvider({
     })();
   }, [publicClient, walletClient]);
 
-  const joinGame = async () => {
+  const joinGame = async (gameId: string) => {
     if (!walletClient) return;
     if (!publicClient) return;
     if (!account) return;
@@ -136,9 +139,9 @@ export default function GlobalContextProvider({
       address: CONTRACT_ADDRESS,
       abi: gameabi,
       functionName: "joinGame",
-      args: [1],
+      args: [gameId],
       account,
-      chain: monadTestnet,
+      chain: sepolia,
     });
 
     await publicClient.waitForTransactionReceipt({ hash: tx });
@@ -212,6 +215,44 @@ export default function GlobalContextProvider({
     };
   };
 
+  const resolveGame = async (gameId: string) => {
+    if (!walletClient || !publicClient || !account) {
+      toast.error("Wallet not connected");
+      return;
+    }
+
+    try {
+      toast.loading(`Resolving game ${gameId}...`);
+
+      const tx = await walletClient.writeContract({
+        address: CONTRACT_ADDRESS,
+        abi: gameabi,
+        functionName: "resolveGame",
+        args: [BigInt(gameId)],
+        account: account,
+        chain: sepolia,
+      });
+
+      await publicClient.waitForTransactionReceipt({ hash: tx });
+
+      toast.dismiss();
+      toast.success("Game resolved successfully!");
+
+      // Refresh games list
+      const updatedGame = await getGameFromId(gameId);
+      if (updatedGame && game) {
+        const updatedGames = game.map((g) =>
+          g.id === gameId ? (updatedGame as Game) : g
+        );
+        setGame(updatedGames);
+      }
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error resolving game:", error);
+      toast.error("Failed to resolve game");
+    }
+  };
+
   const handleConnect = async () => {
     try {
       if (connectors.length === 0) {
@@ -240,6 +281,7 @@ export default function GlobalContextProvider({
         game,
         joinGame,
         getGameFromId,
+        resolveGame,
 
         handleConnect,
       }}

@@ -137,7 +137,7 @@ The `Delegation.tsx` class is ready to be integrated for advanced features:
 
 ```typescript
 // In Game.tsx, when game ends:
-const delegation = new Delegation(monadTestnet, playerAddresses);
+const delegation = new Delegation(sepolia, playerAddresses);
 await delegation.redeemAndSendToWinner(winnerAddress, totalPrizeAmount);
 ```
 
