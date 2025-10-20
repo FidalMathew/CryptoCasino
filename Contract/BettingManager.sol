@@ -53,8 +53,8 @@ contract MemecoinGuessGame is Ownable {
         delegateAccount = _delegate;
 
         // default feeds
-        priceFeeds["BTC"] = 0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43;
-        priceFeeds["ETH"] = 0x694AA1769357215DE4FAC081bf1f309aDC325306;
+        priceFeeds["BTC"] = 0x2Cd9D7E85494F68F5aF08EF96d6FD5e8F71B4d31;
+        priceFeeds["ETH"] = 0x0c76859E85727683Eeba0C70Bc2e0F5781337818;
        
     }
 
